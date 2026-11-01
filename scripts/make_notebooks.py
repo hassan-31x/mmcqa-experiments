@@ -35,6 +35,9 @@ if not os.path.isdir(CODE):
 print(subprocess.run(["git", "-C", CODE, "log", "-1", "--format=%H %s"], capture_output=True, text=True).stdout)
 !nvidia-smi -L
 !pip install -q -r {CODE}/requirements/qwen.txt
+if globals().get("INSTALL_FLA", False):        # optional fast kernels for Qwen3.5's linear-attention layers
+    !pip install -q flash-linear-attention
+    print(subprocess.run([sys.executable, "-c", "import fla; print('fla', fla.__version__)"], capture_output=True, text=True))
 !pip list 2>/dev/null | grep -i -E "^(torch|transformers|peft|bitsandbytes|accelerate|huggingface-hub|tokenizers) "
 '''
 
@@ -74,6 +77,7 @@ LIMIT = 4              # smoke test: 4 dev items per track and a 10-step trainin
 BUDGET_HOURS = 11.0    # the run stops starting new work after this (Kaggle's limit is 12 h)
 TRAIN_HOURS = 6.0      # training time per adapter; the rest of the budget answers dev500
 DEVTEST = False        # True: also answer devtest with the better adapter if >= 3 h remain
+INSTALL_FLA = True     # install flash-linear-attention (Triton kernels); the smoke run shows if it is faster on T4
 WORK = "/kaggle/working/results"
 '''),
     md("## 2. Code and dependencies"),
