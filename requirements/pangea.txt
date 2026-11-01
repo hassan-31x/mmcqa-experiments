@@ -1,3 +1,4 @@
+# Reference only: mmcqa_exp/env_setup.py installs these with `pip --target ... --no-deps` (Kaggle has no ensurepip).
 # Pangea venv (created with --system-site-packages, so torch/CUDA/bitsandbytes come from Kaggle).
 # Only what must differ from the main environment is installed here.
 # The old run (culturalpangea_7b_4e2a96ac07a9) used transformers 4.37.2 on Kaggle's Python 3.13.

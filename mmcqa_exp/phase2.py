@@ -5,7 +5,7 @@
     python -m mmcqa_exp.phase2 --workdir /kaggle/working/results --stages fusion_qwen # rerun one stage
 
 Stages run in priority order. A stage is skipped (and the reason recorded) if a dependency is incomplete
-or if it cannot finish inside the budget. Pangea runs in its own venv (transformers 4.37), Qwen in the
+or if it cannot finish inside the budget. Pangea workers run with their own package directory first on PYTHONPATH (transformers 4.37), Qwen in the
 main environment (transformers 5.x).
 """
 
@@ -78,11 +78,11 @@ def main(argv=None):
     data.fetch_images("dev", media, data.images_needed(eval_set))
     data.official_repo(work)
 
-    pangea_py, pangea_error = None, None
+    pangea_target, pangea_error = None, None
     if any(s.backend == "pangea" for s in specs):
-        from .env_setup import setup_pangea_env
+        from .env_setup import pangea_env, setup_pangea_env
         try:
-            pangea_py = setup_pangea_env(envs / "pangea")
+            pangea_target = setup_pangea_env(envs / "pangea")
         except Exception as exc:
             pangea_error = f"{type(exc).__name__}: {exc}"
             print("[phase2] PANGEA ENVIRONMENT FAILED; Pangea stages will be skipped:\n" + pangea_error, flush=True)
@@ -91,7 +91,7 @@ def main(argv=None):
         "dataset_revision": S.DATASET_REVISION, "qwen": [S.QWEN_REPO, S.QWEN_REVISION],
         "pangea": [S.PANGEA_REPO, S.PANGEA_REVISION], "qwen_max_pixels": S.QWEN_MAX_PIXELS,
         "workers_per_gpu": S.WORKERS_PER_GPU, "eval_rows_per_track": len(eval_set["en"]),
-        "environment": environment({"pangea": pangea_py} if pangea_py else None), "pangea_env_error": pangea_error,
+        "environment": environment(), "pangea_target": pangea_target, "pangea_env_error": pangea_error,
         "stages": [s.describe() for s in specs]})
 
     rates = initial_rates(len(gpus))
@@ -105,7 +105,7 @@ def main(argv=None):
                 ok = all(len(list((work / "predictions" / dep).glob(f"{spec.split}_{t}.jsonl"))) == 1 for t in S.TRACKS)
             if not ok:
                 return {"state": "skipped", "reason": f"dependency '{dep}' is not complete"}
-        if spec.backend == "pangea" and pangea_py is None:
+        if spec.backend == "pangea" and pangea_target is None:
             return {"state": "skipped", "reason": f"Pangea environment unavailable: {pangea_error}"}
         n = sum(len(r) for r in rows.values())
         est_h = n / rates[spec.backend] / 3600
@@ -114,9 +114,9 @@ def main(argv=None):
             return {"state": "skipped", "reason": f"estimated {est_h:.2f} h > {left_h:.2f} h left"}
         J.build_plan(spec, work, rows)
         wpg = S.WORKERS_PER_GPU[spec.backend]
-        exe = pangea_py if spec.backend == "pangea" else sys.executable
+        extra = pangea_env(pangea_target) if spec.backend == "pangea" else None
         print(f"\n[phase2] === {spec.name} ({spec.backend}, {n} items, est {est_h:.2f} h, {left_h:.2f} h left) ===", flush=True)
-        res = launcher.run_stage(work, spec.name, exe, gpus, wpg, hard_deadline, media)
+        res = launcher.run_stage(work, spec.name, sys.executable, gpus, wpg, hard_deadline, media, extra_env=extra)
         if res["answered"] > 0 and res["wall_seconds"] > 60:
             rates[spec.backend] = res["answered"] / res["wall_seconds"]
         st = merge.merge_stage(work, spec.name)

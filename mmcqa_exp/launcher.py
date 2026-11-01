@@ -32,7 +32,7 @@ def missing_keys(work, stage) -> list:
     return [j["key"] for j in plan if j["key"] not in done]
 
 
-def _run_round(work, stage, python_exe, gpus, workers_per_gpu, deadline, media, round_no, ready_timeout):
+def _run_round(work, stage, python_exe, gpus, workers_per_gpu, deadline, media, round_no, ready_timeout, extra_env=None):
     paths = J.stage_paths(work, stage)
     paths["raw"].mkdir(parents=True, exist_ok=True)
     for stale in paths["raw"].glob("ready_*"):
@@ -45,6 +45,7 @@ def _run_round(work, stage, python_exe, gpus, workers_per_gpu, deadline, media, 
         gpu = gpus[k % len(gpus)]
         env = dict(os.environ, CUDA_VISIBLE_DEVICES=str(gpu), TOKENIZERS_PARALLELISM="false",
                    PYTHONUNBUFFERED="1", PYTHONPATH=str(S.REPO_ROOT))
+        env.update(extra_env or {})
         log_path = logs / f"{stage}_worker_{k}.log"
         log = log_path.open("a")
         handles.append(log)
@@ -90,7 +91,7 @@ def _run_round(work, stage, python_exe, gpus, workers_per_gpu, deadline, media, 
     return codes
 
 
-def run_stage(work, stage, python_exe, gpus, workers_per_gpu, deadline, media, rounds=2, ready_timeout=2400):
+def run_stage(work, stage, python_exe, gpus, workers_per_gpu, deadline, media, rounds=2, ready_timeout=2400, extra_env=None):
     """Run ``stage`` until all jobs have an error-free answer, the deadline passes or ``rounds`` run out."""
     t0 = time.time()
     for round_no in range(1, rounds + 1):
@@ -101,7 +102,7 @@ def run_stage(work, stage, python_exe, gpus, workers_per_gpu, deadline, media, r
             print(f"[launcher] {stage}: deadline passed with {len(missing)} items missing", flush=True)
             break
         print(f"[launcher] {stage} round {round_no}: {len(missing)} items to answer on GPUs {list(gpus)}", flush=True)
-        _run_round(work, stage, python_exe, list(gpus), workers_per_gpu, deadline, media, round_no, ready_timeout)
+        _run_round(work, stage, python_exe, list(gpus), workers_per_gpu, deadline, media, round_no, ready_timeout, extra_env)
     wall = time.time() - t0
     left = len(missing_keys(work, stage))
     total = len(read_jsonl(J.stage_paths(work, stage)["plan"]))
