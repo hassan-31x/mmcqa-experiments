@@ -73,11 +73,11 @@ Run Phase 2 in a separate session afterwards (one account: they cannot run at th
     code('''
 REPO_URL = "https://github.com/hassan-31x/mmcqa-experiments.git"
 BRANCH = "main"
-LIMIT = 4              # smoke test: 4 dev items per track and a 10-step training. Set to None for the full run.
+LIMIT = None           # smoke test: set to 4 (4 dev items per track and a 10-step training). None = the full run.
 BUDGET_HOURS = 11.0    # the run stops starting new work after this (Kaggle's limit is 12 h)
 TRAIN_HOURS = 6.0      # training time per adapter; the rest of the budget answers dev500
 DEVTEST = False        # True: also answer devtest with the better adapter if >= 3 h remain
-INSTALL_FLA = True     # install flash-linear-attention (Triton kernels); the smoke run shows if it is faster on T4
+INSTALL_FLA = False    # flash-linear-attention was tested on T4: installs fine, no speedup (22.3 vs 21.9 s/step)
 WORK = "/kaggle/working/results"
 '''),
     md("## 2. Code and dependencies"),
@@ -120,9 +120,9 @@ environment (transformers 5.x). Download `phase2_results.zip` from the Output ta
     code('''
 REPO_URL = "https://github.com/hassan-31x/mmcqa-experiments.git"
 BRANCH = "main"
-LIMIT = 4              # smoke test: 4 dev items per track. Set to None for the full run.
+LIMIT = None           # smoke test: set to 4 (4 dev items per track). None = the full run.
 BUDGET_HOURS = 11.0
-SAMPLES = False        # True: two extra sampled Qwen candidates (about +1.5 h) for MBR
+SAMPLES = True         # two extra sampled Qwen candidates (about +1.7 h) for MBR selection
 DEVTEST = False        # True: also answer devtest with pangea_p0 and qwen_z1 if time allows
 PANGEA_WORKERS = None  # set to 2 after the smoke run if Pangea's peak_mem_gb is below ~7 GB
 WORK = "/kaggle/working/results"
