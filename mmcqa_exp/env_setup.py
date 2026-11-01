@@ -14,15 +14,18 @@ from pathlib import Path
 from . import settings as S
 
 VERIFY = (
-    "import transformers, tokenizers, huggingface_hub, torch\n"
+    "import transformers, tokenizers, huggingface_hub, torch, accelerate\n"
+    "from accelerate import dispatch_model\n"
+    "assert accelerate.__version__.startswith('0.27'), accelerate.__version__\n"
     "assert transformers.__version__.startswith('4.37'), transformers.__version__\n"
     "from llava.model.builder import load_pretrained_model\n"
     "from llava.mm_utils import tokenizer_image_token, process_images\n"
     "import mmcqa_exp.backends.pangea\n"
     "print('PANGEA_ENV_OK', 'transformers', transformers.__version__, 'tokenizers', tokenizers.__version__,\n"
-    "      'hub', huggingface_hub.__version__, 'torch', torch.__version__)\n")
+    "      'hub', huggingface_hub.__version__, 'accelerate', accelerate.__version__, 'torch', torch.__version__)\n")
 
-SHARED = ["huggingface_hub<1.0", "shortuuid", "ftfy", "wcwidth", "open_clip_torch", "timm", "einops-exts"]
+# accelerate 0.27.x is the era-matched version: newer ones call .to() on 4-bit models, which transformers 4.37 forbids
+SHARED = ["accelerate==0.27.2", "huggingface_hub<1.0", "shortuuid", "ftfy", "wcwidth", "open_clip_torch", "timm", "einops-exts"]
 RECIPES = {
     "A: transformers 4.37.2 + newest compatible tokenizers wheel": [
         ["transformers==4.37.2", "--only-binary=:all:", "tokenizers>=0.15,<0.19", *SHARED],
