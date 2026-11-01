@@ -1,0 +1,13 @@
+# Kaggle main environment: Phase 1 (fine-tune + answer) and the Qwen stages of Phase 2.
+# Kaggle ships torch/CUDA; do not reinstall them.
+transformers==5.16.1          # the version our Qwen3.5 runs used
+accelerate>=1.2
+bitsandbytes>=0.46.1
+peft>=0.17
+datasets>=3.0
+huggingface_hub>=0.30
+pillow>=10
+sentencepiece>=0.2
+einops>=0.8
+protobuf>=5
+torchvision                   # the Qwen3.5 processor loads a video processor that needs it

@@ -1,0 +1,10 @@
+# Pangea venv (created with --system-site-packages, so torch/CUDA/bitsandbytes come from Kaggle).
+# Only what must differ from the main environment is installed here.
+# The old run (culturalpangea_7b_4e2a96ac07a9) used transformers 4.37.2 on Kaggle's Python 3.13.
+transformers==4.37.2
+huggingface_hub<1.0
+shortuuid
+ftfy
+open_clip_torch
+einops-exts
+timm
