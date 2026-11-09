@@ -57,7 +57,7 @@ def main():
         v = [f1.loc[s, t] for t in ARABIC]
         for r, x in zip(ax.bar(np.arange(3) + (i - .5) * w, v, w, label=LAB[s], color=COL[s]), v):
             ax.text(r.get_x() + r.get_width() / 2, x, f"{x:.3f}", ha="center", va="bottom", fontsize=8)
-    ax.set_xticks(range(3), [TN[t] for t in ARABIC]); ax.set_ylim(0.55, 0.82); ax.legend(fontsize=8, loc="upper right")
+    ax.set_xticks(range(3), [TN[t] for t in ARABIC]); ax.set_ylim(0.55, 0.82); ax.legend(fontsize=8, loc="lower right")
     ax.set_ylabel("official BERTScore-F1"); ax.set_title("Official score per track (100 items each)")
     ax = axes[1]
     for i, s in enumerate([DIRECT, PIVOT]):
@@ -123,7 +123,7 @@ def main():
     for i, s in enumerate([DIRECT, PIVOT]):
         ax.bar(np.arange(3) + (i - 1) * 0.27, [words.loc[s, t] for t in ARABIC], 0.27, color=COL[s], label=LAB[s])
     ax.bar(np.arange(3) + 0.27, [ref_words[t] for t in ARABIC], 0.27, color="#999", label="Reference")
-    ax.set_xticks(range(3), [TN[t] for t in ARABIC]); ax.set_ylabel("words per answer"); ax.legend(fontsize=8); ax.set_title("Answer length")
+    ax.set_xticks(range(3), [TN[t] for t in ARABIC]); ax.set_ylabel("words per answer"); ax.legend(fontsize=8, loc="upper center", bbox_to_anchor=(0.5, -0.1), ncol=3); ax.set_title("Answer length")
     ax = axes[1]
     for i, s in enumerate([DIRECT, PIVOT]):
         x = [var.loc[s, t] for t in ["arz", "ajp"]]
@@ -144,9 +144,9 @@ def main():
     for i, (lab, vals, c) in enumerate(stages):
         for r, y in zip(ax.bar(x + (i - 1) * w3, vals, w3, label=lab, color=c), vals):
             ax.text(r.get_x() + r.get_width() / 2, y, f"{y:.3f}", ha="center", va="bottom", fontsize=8)
-    ax.axhline(direct_en, color="#1b7837", ls="--", lw=1); ax.text(2.45, direct_en + .002, f"direct English track: {direct_en:.3f}", ha="right", fontsize=8, color="#1b7837")
+    ax.axhline(direct_en, color="#1b7837", ls="--", lw=1); ax.text(-0.45, direct_en + .003, f"direct English track: {direct_en:.3f}", ha="left", fontsize=8, color="#1b7837")
     ax.set_xticks(x, [f"questions from {TN[t]}" for t in ARABIC]); ax.set_ylim(0.6, 0.9); ax.set_ylabel("official BERTScore-F1")
-    ax.set_title("Where does the pivot lose? (different references per bar, see README)"); ax.legend(fontsize=8, loc="upper right")
+    ax.set_title("Where does the pivot lose? (English bar uses the English reference)"); ax.legend(fontsize=8, loc="upper center", bbox_to_anchor=(0.5, -0.1), ncol=3)
     fig.tight_layout(); fig.savefig(a.out / "b5_pipeline_stages.png", dpi=150); plt.close(fig)
     summary["english_stage_f1"] = {t: float(en_f1[t]) for t in ARABIC}; summary["direct_english_f1"] = float(direct_en)
 
