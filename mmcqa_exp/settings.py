@@ -17,6 +17,8 @@ OFFICIAL_COMMIT = "7ec66a47acb82195a288525560c4acb26cb8b7ba"
 # ----------------------------------------------------------------------------- models
 QWEN_REPO = "Qwen/Qwen3.5-4B"
 QWEN_REVISION = "851bf6e806efd8d0a36b00ddf55e13ccb7b8cd0a"      # from the manifests of our Qwen3.5-4B run
+QWEN9B_REPO = "Qwen/Qwen3.5-9B"                                  # same family, loaded in NF4 like the 4B (about 6 GB)
+QWEN9B_REVISION = "c202236235762e1c871ad0ccb60c8ee5ba337b9a"     # HF main when the experiment was added (2026-11-09)
 PANGEA_REPO = "neulab/CulturalPangea-7B"
 PANGEA_REVISION = "5df045f3d042a66ee07b340ea1ce8b50e96fa58f"    # revision recorded by the old Pangea run
 LLAVA_NEXT_GIT = "git+https://github.com/LLaVA-VL/LLaVA-NeXT.git"
@@ -36,11 +38,11 @@ PANGEA_MAX_NEW_TOKENS = 128      # identical to the old Pangea run
 FUSION_HINT_WORDS = 80           # cap on a candidate/hint quoted inside a prompt
 
 # Worker processes per GPU. Pangea may be raised to 2 after the smoke run (see plans/02).
-WORKERS_PER_GPU = {"qwen": 2, "pangea": 1}
+WORKERS_PER_GPU = {"qwen": 2, "pangea": 1, "qwen9b": 1}
 # Rough seconds per item per worker, used only to decide whether a stage fits the budget
 # before it has been measured. Updated from measurements as stages finish.
-DEFAULT_SEC_PER_ITEM = {"qwen": 7.0, "pangea": 6.0}
-SCALING_EFFICIENCY = {"qwen": 0.7, "pangea": 0.85}   # 2 workers on one T4 do not double throughput
+DEFAULT_SEC_PER_ITEM = {"qwen": 7.0, "pangea": 6.0, "qwen9b": 14.0}
+SCALING_EFFICIENCY = {"qwen": 0.7, "pangea": 0.85, "qwen9b": 1.0}   # 2 workers on one T4 do not double throughput
 
 DEFAULT_BUDGET_HOURS = 11.0
 FINAL_RESERVE_MINUTES = 25       # merge + zip at the end of a session

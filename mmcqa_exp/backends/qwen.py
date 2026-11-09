@@ -57,19 +57,19 @@ def bnb_config(dtype):
                               bnb_4bit_compute_dtype=dtype, llm_int8_skip_modules=SKIP_MODULES)
 
 
-def load_qwen(four_bit=True):
+def load_qwen(four_bit=True, repo=S.QWEN_REPO, revision=S.QWEN_REVISION):
     """Load base model + processor on the single visible GPU. Returns ``(model, processor, dtype)``."""
     import torch
     from transformers import AutoModelForMultimodalLM, AutoProcessor
     if not torch.cuda.is_available():
         raise RuntimeError("A CUDA GPU is required (Kaggle: Settings -> Accelerator -> GPU T4 x2).")
     dtype = compute_dtype()
-    print(f"[qwen] loading {S.QWEN_REPO}@{S.QWEN_REVISION[:8]} dtype={dtype} 4bit={four_bit}", flush=True)
-    kwargs = {"revision": S.QWEN_REVISION, "device_map": {"": 0}, "dtype": dtype}
+    print(f"[qwen] loading {repo}@{revision[:8]} dtype={dtype} 4bit={four_bit}", flush=True)
+    kwargs = {"revision": revision, "device_map": {"": 0}, "dtype": dtype}
     if four_bit:
         kwargs["quantization_config"] = bnb_config(dtype)
-    model = AutoModelForMultimodalLM.from_pretrained(S.QWEN_REPO, **kwargs)
-    processor = AutoProcessor.from_pretrained(S.QWEN_REPO, revision=S.QWEN_REVISION)
+    model = AutoModelForMultimodalLM.from_pretrained(repo, **kwargs)
+    processor = AutoProcessor.from_pretrained(repo, revision=revision)
     set_pixel_budget(processor)
     tokens = assert_pixel_budget(processor)
     print(f"[qwen] pixel budget {S.QWEN_MAX_PIXELS} -> {tokens} visual tokens for a 1400x1000 image", flush=True)
@@ -105,6 +105,8 @@ def _eos_ids(model, processor) -> set:
 
 
 class QwenBackend:
+    repo, revision = S.QWEN_REPO, S.QWEN_REVISION
+
     def __init__(self, adapter=None, four_bit=True):
         self.adapter, self.four_bit = adapter, four_bit
         self.model = self.processor = self.dtype = None
@@ -117,7 +119,7 @@ class QwenBackend:
         return self
 
     def load(self):
-        self.model, self.processor, self.dtype = load_qwen(self.four_bit)
+        self.model, self.processor, self.dtype = load_qwen(self.four_bit, self.repo, self.revision)
         if self.adapter:
             from peft import PeftModel
             print(f"[qwen] attaching LoRA adapter {self.adapter}", flush=True)
@@ -159,3 +161,8 @@ class QwenBackend:
         return {"raw_answer": text, "new_tokens": n, "prompt_tokens": int(length),
                 "hit_max_new_tokens": bool(n >= max_new_tokens and last not in _eos_ids(self.model, self.processor)),
                 "mean_logprob": mean_logprob}
+
+
+class Qwen9BBackend(QwenBackend):
+    """Qwen3.5-9B in the same NF4 setup, prompt and pixel budget as the 4B."""
+    repo, revision = S.QWEN9B_REPO, S.QWEN9B_REVISION

@@ -151,12 +151,51 @@ for p in sorted(glob.glob(f"{WORK}/predictions/*/dev_arz.jsonl")):
     code('ZIPNAME = "phase2_results.zip"\n' + PACKAGE),
 ])
 
-for phase, nb, name in (("phase1", p1, "kaggle_phase1_finetune.ipynb"), ("phase2", p2, "kaggle_phase2_ensemble.ipynb")):
+p3 = notebook([
+    md("""
+# Phase 3: quantized Qwen3.5-9B, zero-shot (SemEval 2027 Task 6, Task 2)
+
+Does Qwen3.5-9B in NF4 (about 6 GB, one T4 per worker) beat Qwen3.5-4B in NF4 (about 3 GB)? One stage, `qwen9b_z1`, on the
+first `ROWS` dev items per track, with exactly the prompt, pixel budget and token cap of the 4B zero-shot control
+(`qwen_z1`, Phase 2). Scoring and the judge run locally. Download `phase3_results.zip` from the Output tab.
+
+**Before running:** Settings -> Accelerator -> **GPU T4 x2**, Internet **on**.
+"""),
+    md("## 1. Config"),
+    code('''
+REPO_URL = "https://github.com/hassan-31x/mmcqa-experiments.git"
+BRANCH = "main"
+ROWS = 100             # items per track (the first 100 dev rows = the old runs' dev100). 4 = smoke test.
+BUDGET_HOURS = 5.0
+WORKERS_PER_GPU = 1    # the 9B takes about 6 GB: two workers per T4 would leave too little room for activations
+WORK = "/kaggle/working/results"
+'''),
+    md("## 2. Code and dependencies"),
+    code(SETUP),
+    code(HF_TOKEN),
+    md("## 3. Answer with Qwen3.5-9B (NF4)"),
+    code('''
+!cd {CODE} && python -m mmcqa_exp.phase3 --workdir {WORK} --rows {ROWS} --budget-hours {BUDGET_HOURS} --workers-per-gpu {WORKERS_PER_GPU}
+'''),
+    md("## 4. What happened"),
+    code('''
+import json, glob
+print(open(f"{WORK}/logs/phase3_completion.json").read()[:3000])
+for p in sorted(glob.glob(f"{WORK}/predictions/qwen9b_z1/dev_*.jsonl")):
+    print(p); [print("  ", json.loads(l)["question"], "->", json.loads(l)["answer"]) for l in open(p).readlines()[:3]]
+'''),
+    md("## 5. Package"),
+    code('ZIPNAME = "phase3_results.zip"\n' + PACKAGE),
+])
+
+NAMES = {"phase1": "finetune", "phase2": "ensemble", "phase3": "qwen9b"}
+for phase, nb, name in (("phase1", p1, "kaggle_phase1_finetune.ipynb"), ("phase2", p2, "kaggle_phase2_ensemble.ipynb"),
+                        ("phase3", p3, "kaggle_phase3_qwen9b.ipynb")):
     out = ROOT / "kaggle" / phase
     out.mkdir(parents=True, exist_ok=True)
     (out / name).write_text(json.dumps(nb, indent=1, ensure_ascii=False) + "\n", encoding="utf-8")
-    meta = {"id": f"muhammadhassan31/mmcqa-{phase}-" + ("finetune" if phase == "phase1" else "ensemble"),
-            "title": f"mmcqa-{phase}-" + ("finetune" if phase == "phase1" else "ensemble"),
+    meta = {"id": f"muhammadhassan31/mmcqa-{phase}-{NAMES[phase]}",
+            "title": f"mmcqa-{phase}-{NAMES[phase]}",
             "code_file": name, "language": "python", "kernel_type": "notebook", "is_private": True,
             "enable_gpu": True, "enable_tpu": False, "enable_internet": True, "machine_shape": "NvidiaTeslaT4",
             "dataset_sources": [], "competition_sources": [], "kernel_sources": [], "model_sources": []}

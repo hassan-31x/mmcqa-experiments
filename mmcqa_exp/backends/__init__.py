@@ -6,6 +6,9 @@ def get_backend(name: str):
     if name == "qwen":
         from .qwen import QwenBackend
         return QwenBackend
+    if name == "qwen9b":
+        from .qwen import Qwen9BBackend
+        return Qwen9BBackend
     if name == "pangea":
         from .pangea import PangeaBackend
         return PangeaBackend
