@@ -20,6 +20,11 @@ def p_new(question: str, track: str) -> str:
             "and add one supporting detail. No lists, no markdown.")
 
 
+def p_new_en(question: str, track: str) -> str:
+    """Pivot experiment: the question was translated to English, so the model answers in English whatever the track."""
+    return p_new(question, "en")
+
+
 def p_cascade(question: str, track: str, hint: str) -> str:
     hint = cap_words(hint, S.FUSION_HINT_WORDS)
     return (f"{question.strip()}\n"

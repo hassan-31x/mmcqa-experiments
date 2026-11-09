@@ -23,6 +23,7 @@ class SFTConfig:
     eval_rows_per_track: int = None   # None = the 50-row slice
     min_lora_dim: int = 64            # skip Linear layers narrower than this (tiny gating projections)
     warn_below_steps: int = 300
+    model: str = "4b"                 # "4b" = Qwen3.5-4B, "9b" = Qwen3.5-9B (both NF4)
 
     @property
     def effective_batch(self) -> int:
@@ -40,4 +41,9 @@ SMOKE = SFTConfig("SMOKE", lr=1e-4, max_steps=10, eval_every=5, train_rows_per_t
 SMOKE2 = SFTConfig("SMOKE2", lr=2e-4, max_steps=10, eval_every=5, train_rows_per_track=64, eval_rows_per_track=8,
                    warn_below_steps=0)
 
-CONFIGS = {c.name: c for c in (S1, S2, SMOKE, SMOKE2)}
+# Experiment A: the same recipe on the quantized 9B. max_steps=870 is what S2 actually trained (13,920 examples);
+# if the time budget allows fewer steps the sizing step shrinks it and records the fraction of the 4B's data seen.
+S1_9B = SFTConfig("S1_9B", lr=1e-4, model="9b", max_steps=870, warn_below_steps=0)
+S2_9B = SFTConfig("S2_9B", lr=2e-4, model="9b", max_steps=870, warn_below_steps=0)
+
+CONFIGS = {c.name: c for c in (S1, S2, SMOKE, SMOKE2, S1_9B, S2_9B)}

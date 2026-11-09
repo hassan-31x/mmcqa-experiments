@@ -55,6 +55,8 @@ def render_prompt(spec: StageSpec, row: dict, track: str, deps: dict):
         return prompts.p0(q, track), {}
     if spec.prompt == "p_new":
         return prompts.p_new(q, track), {}
+    if spec.prompt == "p_new_en":
+        return prompts.p_new_en(q, track), {}
     if spec.prompt == "p_cascade":
         src = spec.deps[0]
         return prompts.p_cascade(q, track, deps[src][(track, rid)]), {"hint_from": src}

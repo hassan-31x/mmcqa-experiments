@@ -353,7 +353,8 @@ def main(argv=None):
         eval_ex, _ = build_examples(eval_rows, args.media)
         print(f"[sft {cfg.name}] {len(train_ex)} train / {len(eval_ex)} eval examples ({skipped} skipped)", flush=True)
 
-        model, processor, dtype = load_qwen()
+        repo, revision = ((S.QWEN9B_REPO, S.QWEN9B_REVISION) if cfg.model == "9b" else (S.QWEN_REPO, S.QWEN_REVISION))
+        model, processor, dtype = load_qwen(True, repo, revision)
         model = prepare_lora(model, cfg, work / "logs")
         collator = SFTCollator(processor)
         for ex in train_ex[:2]:                       # show exactly what is trained on

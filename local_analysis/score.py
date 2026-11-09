@@ -71,6 +71,8 @@ def main(argv=None):
                 raise SystemExit(f"{base}/{t}: {len(missing)} of {len(ids)} ids missing (e.g. {missing[0][:12]}). "
                                  "A missing item scores 0 on the leaderboard; finish the run or pass --allow-partial.")
             use = [i for i in ids if i in have]
+            if not use:
+                continue                                      # e.g. a pivot system that only covers 3 tracks
             gold_path = out / "files" / f"gold_{t}_{len(use)}.jsonl"
             write_jsonl(gold_path, ({"id": i, "answer": {t: gold_by[t][i]["answer"]}} for i in use))
             pred_path = out / "files" / f"{system}_{t}.jsonl"
