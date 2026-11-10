@@ -96,7 +96,8 @@ def main():
             if base in vals and ft in vals:
                 ax.plot(["base", "fine-tuned"], [vals[base], vals[ft]], "o-", color=c, lw=2, label=f"Qwen3.5-{size} (NF4)")
                 for xi, y in enumerate([vals[base], vals[ft]]):
-                    ax.text(xi, y, f" {y:.3f}" if "F1" in ttl else f" {y:.1f}", va="bottom", fontsize=8)
+                    ax.annotate(f"{y:.3f}" if "F1" in ttl else f"{y:.1f}", (xi, y), textcoords="offset points",
+                                xytext=(-26 if size == "4B" else 26, 6 if size == "4B" else -12), ha="center", fontsize=8, color=c)
         ax.set_title(ttl); ax.legend(fontsize=8); ax.grid(alpha=.3)
     fig.suptitle("Does model size still matter after fine-tuning?"); fig.tight_layout(); fig.savefig(a.out / "a3_size_vs_finetune.png", dpi=150); plt.close(fig)
 
@@ -118,13 +119,13 @@ def main():
     for ax, (c, lo, hi, ttl, fmt) in zip(axes, [("d_macro_F1", "F1_lo", "F1_hi", "Official F1 difference (paired, 95% CI)", "{:+.3f}"),
                                                 ("d_judge_pts", "judge_lo", "judge_hi", "Judge-correct difference, points (95% CI)", "{:+.1f}")]):
         for i, r in enumerate(rows):
-            ax.errorbar(r[c], i, xerr=[[r[c] - r[lo]], [r[hi] - r[c]]], fmt="o", color="k", capsize=4); ax.text(r[c], i - .25, fmt.format(r[c]), ha="center", fontsize=8)
-        ax.axvline(0, color="grey"); ax.set_yticks(range(len(rows)), [r["comparison"] for r in rows], fontsize=8); ax.invert_yaxis(); ax.set_title(ttl, fontsize=10)
+            ax.errorbar(r[c], i, xerr=[[r[c] - r[lo]], [r[hi] - r[c]]], fmt="o", color="k", capsize=4); ax.text(r[c], i + .3, fmt.format(r[c]), ha="center", fontsize=8)
+        ax.axvline(0, color="grey"); ax.set_yticks(range(len(rows)), [r["comparison"] for r in rows], fontsize=8); ax.invert_yaxis(); ax.set_title(ttl, fontsize=10, pad=10)
     fig.tight_layout(); fig.savefig(a.out / "a4_paired_differences.png", dpi=150); plt.close(fig)
     summary["paired"] = rows
 
     # 5 training curves and cost
-    logs4, logs9 = a.phase1 / "results" / "logs", a.kaggle / "results" / "logs"
+    logs4, logs9 = a.phase1 / "results" / "logs", (a.kaggle / "logs" if (a.kaggle / "logs").exists() else a.kaggle / "results" / "logs")
     train = {}
     fig, axes = plt.subplots(1, 3, figsize=(15, 4.2))
     for name, d, c, ls in [("4B S2", logs4 / "sft_S2", "#1b7837", "-"), ("4B S1", logs4 / "sft_S1", "#7fbf7b", "--"),
