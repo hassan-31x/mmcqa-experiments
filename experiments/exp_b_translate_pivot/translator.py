@@ -68,8 +68,9 @@ class Translator:
                 time.sleep(2 ** attempt)
         raise RuntimeError(f"translation failed: {type(last).__name__}: {str(last)[:200]}")
 
-    def translate_many(self, items, direction):
-        """items: list of (key, track, text). direction: 'to_en' (track = source variety) or 'from_en' (track = target)."""
+    def translate_many(self, items, direction, template=None):
+        """items: list of (key, track, text). direction: 'to_en' (track = source variety) or 'from_en' (track = target).
+        template: optional callable (track, text) -> prompt; give it its own direction label so the cache stays separate."""
         out = {}
 
         def one(item):
@@ -77,8 +78,11 @@ class Translator:
             h = self._hash(direction, track, text)
             if h in self.cache:
                 return key, self.cache[h]["translation"]
-            prompt = (TO_EN.format(src=SRC_NAME[track], text=text) if direction == "to_en"
-                      else FROM_EN.format(dst=LANG[track], text=text))
+            if template is not None:
+                prompt = template(track, text)
+            else:
+                prompt = (TO_EN.format(src=SRC_NAME[track], text=text) if direction == "to_en"
+                          else FROM_EN.format(dst=LANG[track], text=text))
             tr = self._call(prompt)
             rec = {"hash": h, "model": self.model, "direction": direction, "track": track, "source": text, "translation": tr}
             with self.lock:
